@@ -1,6 +1,7 @@
 /* =========================================================
-   LANDELAND — styles.css
-   Clean, responsive, light/dark toggle
+   LANDELAND — Simple GitHub Pages site
+   Fixes the "giant stacked images" issue by enforcing cropping
+   via aspect-ratio + object-fit.
    ========================================================= */
 
 /* ---------- Reset / base ---------- */
@@ -17,330 +18,362 @@ body{
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  color: var(--text);
+  background: var(--bg);
 }
 
 img{ max-width: 100%; display: block; }
 a{ color: inherit; text-decoration: none; }
-button{ font: inherit; }
 
-/* ---------- Theme tokens ---------- */
-/* Default: dark (matches your other sites). If you prefer light default, the JS handles OS preference. */
+/* ---------- Tokens / layout ---------- */
 :root{
   --wrap: 1060px;
   --gutter: clamp(18px, 4vw, 48px);
 
-  --bg: #0b0f14;
-  --text: rgba(255,255,255,.92);
-  --muted: rgba(255,255,255,.70);
+  /* Light (default) */
+  --bg: #ffffff;
+  --text: rgba(15,15,15,0.92);
+  --muted: rgba(15,15,15,0.64);
 
-  --surface: rgba(255,255,255,.04);
-  --surface-2: rgba(255,255,255,.06);
-  --border: rgba(255,255,255,.12);
+  --line: rgba(15,15,15,0.10);
+  --card: rgba(15,15,15,0.02);
+  --surface: #f3f3f3;
+  --header-bg: rgba(255,255,255,0.88);
 
-  --shadow: 0 18px 44px rgba(0,0,0,.45);
-  --shadow-soft: 0 10px 26px rgba(0,0,0,.35);
+  --shadow: 0 16px 40px rgba(0,0,0,0.08);
+  --shadow-soft: 0 10px 24px rgba(0,0,0,0.06);
 
   --r-lg: 18px;
   --r-md: 14px;
 
-  --ease: cubic-bezier(.2,.8,.2,1);
+  --ease: cubic-bezier(.2, .8, .2, 1);
   --dur: 180ms;
 }
 
-:root[data-theme="light"]{
-  --bg: #ffffff;
-  --text: rgba(15,15,15,.92);
-  --muted: rgba(15,15,15,.64);
+:root[data-theme="dark"]{
+  --bg: #0b0f14;
+  --text: rgba(255,255,255,0.92);
+  --muted: rgba(255,255,255,0.70);
 
-  --surface: rgba(15,15,15,.04);
-  --surface-2: rgba(15,15,15,.06);
-  --border: rgba(15,15,15,.12);
+  --line: rgba(255,255,255,0.12);
+  --card: rgba(255,255,255,0.05);
+  --surface: rgba(255,255,255,0.06);
+  --header-bg: rgba(11,15,20,0.82);
 
-  --shadow: 0 18px 44px rgba(0,0,0,.10);
-  --shadow-soft: 0 10px 26px rgba(0,0,0,.08);
+  --shadow: 0 16px 40px rgba(0,0,0,0.45);
+  --shadow-soft: 0 10px 24px rgba(0,0,0,0.35);
 }
 
-html{ background: var(--bg); }
-body{
-  background: var(--bg);
-  color: var(--text);
-  line-height: 1.55;
-}
-
-/* ---------- Layout ---------- */
 .wrap{
   width: min(var(--wrap), calc(100% - (var(--gutter) * 2)));
   margin: 0 auto;
 }
 
-.section{ padding: 40px 0; }
-.section-title{
-  margin: 0 0 16px;
-  font-size: clamp(20px, 1.4vw + 16px, 28px);
-  letter-spacing: -0.02em;
-}
-
-.muted{ color: var(--muted); }
+.narrow{ max-width: 70ch; }
 
 /* ---------- Header ---------- */
 .site-header{
   position: sticky;
   top: 0;
   z-index: 10;
-  background: color-mix(in oklab, var(--bg) 92%, transparent);
-  backdrop-filter: saturate(140%) blur(10px);
-  border-bottom: 1px solid var(--border);
+  background: var(--header-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
 }
 
 .header-inner{
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  gap: 14px;
-  padding: 16px 0;
+  padding: 18px 0;
+  gap: 18px;
 }
 
 .logo{
-  font-weight: 750;
+  font-weight: 800;
   letter-spacing: -0.02em;
+  font-size: clamp(22px, 2.2vw + 10px, 40px);
 }
 
 .nav{
-  display: inline-flex;
+  display: flex;
+  gap: 18px;
   align-items: center;
-  gap: 14px;
 }
 
 .nav-link{
+  font-size: 0.98rem;
   color: var(--muted);
   transition: color var(--dur) var(--ease);
 }
 .nav-link:hover{ color: var(--text); }
 
-/* Theme toggle: small, icon-only */
-.theme-toggle{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 34px;
-  height: 34px;
-  padding: 0;
-
-  border-radius: 10px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  box-shadow: none;
-
-  cursor: pointer;
-  transition: transform var(--dur) var(--ease),
-              background var(--dur) var(--ease),
-              border-color var(--dur) var(--ease);
+/* ---------- Hero ---------- */
+.hero{
+  padding: clamp(18px, 3.8vw, 34px) 0 0;
 }
-.theme-toggle:hover{
-  transform: translateY(-1px);
-  background: var(--surface-2);
+
+.hero-inner{ display: grid; gap: 14px; }
+
+.kicker{
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.98rem;
 }
-.theme-toggle:active{ transform: translateY(0px); }
 
-.theme-toggle .sun,
-.theme-toggle .moon{ font-size: 15px; line-height: 1; }
-
-:root[data-theme="light"] .theme-toggle .sun{ display: inline; }
-:root[data-theme="light"] .theme-toggle .moon{ display: none; }
-:root:not([data-theme="light"]) .theme-toggle .sun{ display: none; }
-:root:not([data-theme="light"]) .theme-toggle .moon{ display: inline; }
-
-/* ---------- Hero image ---------- */
-.hero-image{
+.hero-media{
+  aspect-ratio: 21 / 9;
   border-radius: var(--r-lg);
   overflow: hidden;
-  border: 1px solid var(--border);
   background: var(--surface);
+  border: 1px solid var(--line);
   box-shadow: var(--shadow-soft);
 }
-.hero-image img{
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-/* ---------- People ---------- */
-.people{ display: grid; gap: 18px; }
-.people-grid{
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-}
-@media (max-width: 760px){
-  .people-grid{ grid-template-columns: 1fr; }
-}
-
-.person-card{
-  border-radius: var(--r-lg);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  padding: 16px;
-  box-shadow: var(--shadow-soft);
-}
-
-.person-photo{
-  border-radius: var(--r-md);
-  overflow: hidden;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  aspect-ratio: 1 / 1;
-}
-.person-photo img{
+.hero-media img{
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
+/* ---------- Sections ---------- */
+.section{ padding: 44px 0; }
+
+.section-title{
+  margin: 0 0 16px;
+  font-size: clamp(18px, 1.4vw + 14px, 26px);
+  letter-spacing: -0.015em;
+}
+
+p{
+  margin: 0 0 14px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+/* ---------- Family grid ---------- */
+.family-grid{
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+@media (min-width: 720px){
+  .family-grid{ grid-template-columns: repeat(4, 1fr); }
+}
+
+.person{ display: grid; gap: 12px; align-content: start; }
+
+.person-photo{
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--card);
+  box-shadow: var(--shadow-soft);
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.person-photo:hover{
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.person-photo img{
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  height: auto;
+  object-fit: cover;
+}
+
+.person-meta{ display: grid; gap: 10px; }
+
 .person-name{
-  margin: 10px 0 6px;
   font-weight: 700;
   letter-spacing: -0.01em;
+  font-size: 1rem;
 }
-.person-links{
+
+/* ---------- Social icons ---------- */
+.social{
   display: flex;
   gap: 10px;
-  margin-top: 8px;
+  align-items: center;
 }
-.icon-btn{
-  width: 30px;
-  height: 30px;
+.social a{
+  width: 36px;
+  height: 36px;
   border-radius: 999px;
-  border: 1px solid var(--border);
-  background: transparent;
+  border: 1px solid var(--line);
+  background: var(--bg);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--muted);
-  transition: transform var(--dur) var(--ease), color var(--dur) var(--ease), background var(--dur) var(--ease);
+  color: rgba(15,15,15,0.75);
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.icon-btn:hover{
+.social a:hover{
   transform: translateY(-1px);
+  box-shadow: var(--shadow-soft);
   color: var(--text);
-  background: var(--surface-2);
 }
+.social svg{ width: 18px; height: 18px; display: block; }
 
-/* ---------- Adventures tiles ---------- */
-.adventures-grid{
+/* ---------- Adventures ---------- */
+.adventures{
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 18px;
 }
-
-@media (max-width: 760px){
-  .adventures-grid{ grid-template-columns: 1fr; }
+@media (min-width: 860px){
+  .adventures{ grid-template-columns: 1fr 1fr; }
 }
 
 .tile{
-  display: grid;
-  grid-template-rows: 265px auto;
-  border: 1px solid var(--border);
+  border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  background: var(--surface);
+  background: var(--card);
   overflow: hidden;
   box-shadow: var(--shadow-soft);
-  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease);
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
-
 .tile:hover{
   transform: translateY(-2px);
   box-shadow: var(--shadow);
-  background: var(--surface-2);
 }
 
+/* Critical: crop tile media so tall images don't dominate */
 .tile-media{
-  position: relative;
+  aspect-ratio: 4 / 3;
   overflow: hidden;
-  background: var(--surface-2);
+  background: var(--surface);
 }
-
-/* Default: photo-style, fill */
 .tile-media img{
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
 }
 
-/* Logo-style: keep original aspect, do NOT upscale, center it */
-.tile-media--contain{
+/* override ONLY the logo tile (TLG) */
+.tile-media.tile-logo{
+  /* keep same card height as other tiles */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 18px;
+  background: var(--surface);
+}
+
+/* the logo image: never crop, keep its aspect ratio */
+.tile-media.tile-logo img{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+
+
+.tile-title{
+  padding: 14px 16px 16px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: rgba(15,15,15,0.86);
+}
+
+
+/* ---------- CTA ---------- */
+.actions{ display: flex; justify-content: center; padding-top: 28px; }
+
+.btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(15,15,15,0.18);
+  background: var(--bg);
+  color: rgba(15,15,15,0.88);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.btn:hover{
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-soft);
+  background: rgba(15,15,15,0.02);
+}
+
+/* ---------- Footer ---------- */
+.site-footer{
+  border-top: 1px solid var(--line);
+  padding: 22px 0 28px;
+}
+.footer-inner{
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+small{ color: var(--muted); }
+
+/* ---------- Motion ---------- */
+@keyframes riseIn{
+  from{ opacity: 0; transform: translateY(8px); }
+  to{ opacity: 1; transform: translateY(0); }
+}
+.motion .site-header{ animation: riseIn .35s var(--ease) both; }
+.motion .hero{ animation: riseIn .5s var(--ease) both; }
+.motion .section{ animation: riseIn .55s var(--ease) both; }
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation: none !important; transition: none !important; }
+}
+
+
+/* Safety: if the logo class is placed on the <img>, don't crop it */
+.tile-media img.tile-logo{ object-fit: contain !important; }
+
+
+/* ---------- Theme toggle ---------- */
+.theme-toggle{
+  margin-left: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: inherit;
+  cursor: pointer;
+  transition: transform var(--dur) var(--ease), background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.theme-toggle:hover{
+  transform: translateY(-1px);
+  background: var(--surface);
+}
+.theme-toggle:active{ transform: translateY(0); }
+.theme-toggle .sun, .theme-toggle .moon{ font-size: 15px; line-height: 1; }
+
+:root[data-theme="dark"] .theme-toggle .sun{ display:none; }
+:root[data-theme="dark"] .theme-toggle .moon{ display:inline; }
+:root:not([data-theme="dark"]) .theme-toggle .sun{ display:inline; }
+:root:not([data-theme="dark"]) .theme-toggle .moon{ display:none; }
+
+
+/* ---------- Logo tile: prevent crop/zoom ---------- */
+.tile-media--logo{
+  background: var(--surface);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: var(--surface-2);
 }
 
-.tile-media--contain img{
-  width: auto;
-  height: auto;
+.tile-media--logo img.tile-logo{
+  width: auto !important;
+  height: auto !important;
   max-width: 100%;
-  max-height: 100%;
-  object-fit: contain; /* safe even though width/height are auto */
-}
-
-.tile-body{
-  padding: 16px 16px 18px;
-}
-
-.tile-title{
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-/* ---------- CTA ---------- */
-.cta{
-  display: flex;
-  justify-content: center;
-  padding: 8px 0 24px;
-}
-.btn{
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text);
-  padding: 10px 16px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: transform var(--dur) var(--ease), background var(--dur) var(--ease);
-}
-.btn:hover{
-  transform: translateY(-1px);
-  background: var(--surface-2);
-}
-
-/* ---------- About ---------- */
-.about{
-  border-top: 1px solid var(--border);
-  padding-top: 34px;
-}
-.about p{ color: var(--muted); max-width: 72ch; }
-
-/* ---------- Footer ---------- */
-.footer{
-  border-top: 1px solid var(--border);
-  padding: 26px 0;
-  color: var(--muted);
-  font-size: 13px;
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-/* ---------- Motion ---------- */
-@keyframes riseIn{
-  from{ opacity: 0; transform: translateY(10px); filter: blur(2px); }
-  to  { opacity: 1; transform: translateY(0px); filter: blur(0); }
-}
-.motion .site-header,
-.motion .main{ animation: riseIn .45s var(--ease) both; }
-
-@media (prefers-reduced-motion: reduce){
-  * { animation: none !important; transition: none !important; }
+  max-height: 220px;
+  object-fit: contain !important;
 }

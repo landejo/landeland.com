@@ -6,65 +6,173 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <title>LANDELAND</title>
 <meta content="Home of the Lande Family." name="description"/>
+<meta content="Landeland" name="author"/>
+<!-- Favicons (optional). Keep relative so local file:// testing doesn't error. -->
+<link href="favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="favicon.ico" rel="icon" sizes="any"/>
 <link href="styles.css" rel="stylesheet"/>
 </head>
 <body class="motion">
 <header class="site-header">
 <div class="wrap header-inner">
-<a class="logo" href="#top">LANDELAND</a>
+<a aria-label="Landeland home" class="logo" href="#top">LANDELAND</a>
 <nav class="nav">
+<a class="nav-link" href="https://jasonlande.smugmug.com/Private/Favorite-Photos/n-CctXWG" rel="noopener noreferrer" target="_blank">Gallery</a>
 <a class="nav-link" href="#about">About Us</a>
-</nav>
-<button aria-label="Toggle theme" class="theme-toggle" id="themeToggle" type="button"><span aria-hidden="true" class="sun">☼</span><span aria-hidden="true" class="moon">☾</span></button></div>
+<button aria-label="Toggle theme" class="theme-toggle" id="themeToggle" type="button"><span aria-hidden="true" class="sun">☼</span><span aria-hidden="true" class="moon">☾</span></button></nav>
+</div>
 </header>
 <main class="main" id="top">
-<section class="section">
+<!-- Hero -->
+<section aria-label="Hero" class="hero">
+<div class="wrap hero-inner">
+<p class="kicker">Home of the Lande Family</p>
+<!-- Background image: replace hero.jpg in /assets with your preferred image. -->
+<div aria-hidden="true" class="hero-media">
+<img alt="" src="assets/hero.jpg"/>
+</div>
+</div>
+</section>
+<!-- Family -->
+<section aria-labelledby="family" class="section">
 <div class="wrap">
-<h2 class="section-title">These are some of our (ad)ventures</h2>
+<h2 class="section-title" id="family">This is us</h2>
+<div class="family-grid">
+<!-- Tracey -->
+<article class="person">
+<a aria-label="Tracey Lande site" class="person-photo" href="https://traceylande.com" rel="noopener noreferrer" target="_blank">
+<img alt="Tracey Lande" src="assets/tracey.jpg"/>
+</a>
+<div class="person-meta">
+<div class="person-name">Tracey Lande</div>
+<div aria-label="Tracey social links" class="social">
+<a aria-label="Email" href="mailto:tracey@landeland.com" rel="noopener noreferrer" target="_blank">
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 6h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Zm0 2 8 5 8-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path></svg>
+</a>
+<a aria-label="LinkedIn" href="https://www.linkedin.com/in/tracey-lande/" rel="noopener noreferrer" target="_blank">
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M6.5 6.5A2 2 0 1 1 2.5 6.5a2 2 0 0 1 4 0ZM3.5 21V9h3v12h-3Zm7-12h2.9v1.7h.1c.4-.8 1.5-1.9 3.3-1.9 3.5 0 4.1 2.2 4.1 5.1V21h-3v-5.4c0-1.3 0-3-1.8-3s-2.1 1.4-2.1 2.9V21h-3V9Z" fill="currentColor"></path></svg>
+</a>
+<a aria-label="Instagram" href="https://PLACEHOLDER_TRACEY_INSTAGRAM" rel="noopener noreferrer" target="_blank">
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm5 6.2A3.8 3.8 0 1 0 15.8 12 3.8 3.8 0 0 0 12 8.2Zm6.1-.9a.9.9 0 1 0 .9.9.9.9 0 0 0-.9-.9Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path></svg>
+</a>
+</div>
+</div>
+</article>
+<!-- Jason -->
+<article class="person">
+<a aria-label="Jason Lande site" class="person-photo" href="https://jasonlande.com" rel="noopener noreferrer" target="_blank">
+<img alt="Jason Lande" src="assets/jason.jpg"/>
+</a>
+<div class="person-meta">
+<div class="person-name">Jason Lande</div>
+<div aria-label="Jason social links" class="social">
+<a aria-label="Email" href="mailto:jason@landeland.com" rel="noopener noreferrer" target="_blank">
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 6h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Zm0 2 8 5 8-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path></svg>
+</a>
+<a aria-label="LinkedIn" href="https://www.linkedin.com/in/jasonlande/" rel="noopener noreferrer" target="_blank">
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M6.5 6.5A2 2 0 1 1 2.5 6.5a2 2 0 0 1 4 0ZM3.5 21V9h3v12h-3Zm7-12h2.9v1.7h.1c.4-.8 1.5-1.9 3.3-1.9 3.5 0 4.1 2.2 4.1 5.1V21h-3v-5.4c0-1.3 0-3-1.8-3s-2.1 1.4-2.1 2.9V21h-3V9Z" fill="currentColor"></path></svg>
+</a>
+<a aria-label="Instagram" href="https://www.instagram.com/landejo/" rel="noopener noreferrer" target="_blank">
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm5 6.2A3.8 3.8 0 1 0 15.8 12 3.8 3.8 0 0 0 12 8.2Zm6.1-.9a.9.9 0 1 0 .9.9.9.9 0 0 0-.9-.9Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path></svg>
+</a>
+</div>
+</div>
+</article>
+<!-- Beck -->
+<article class="person">
+<a aria-label="Beck link" class="person-photo" href="https://PLACEHOLDER_BECK_LINK" rel="noopener noreferrer" target="_blank">
+<img alt="Beck" src="assets/beck.jpg"/>
+</a>
+<div class="person-meta">
+<div class="person-name">Beck</div>
+<div aria-label="Beck links" class="social">
+<a aria-label="Link" href="https://PLACEHOLDER_BECK_LINK" rel="noopener noreferrer" target="_blank">
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1 0l2.1-2.1a5 5 0 0 0-7.1-7.1L10.5 4.4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"></path><path d="M14 11a5 5 0 0 0-7.1 0L4.8 13.1a5 5 0 1 0 7.1 7.1l1.6-1.6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"></path></svg>
+</a>
+</div>
+</div>
+</article>
+<!-- Leo -->
+<article class="person">
+<a aria-label="Leo link" class="person-photo" href="https://PLACEHOLDER_LEO_LINK" rel="noopener noreferrer" target="_blank">
+<img alt="Leo" src="assets/leo.jpg"/>
+</a>
+<div class="person-meta">
+<div class="person-name">Leo</div>
+<div aria-label="Leo links" class="social">
+<a aria-label="Link" href="https://PLACEHOLDER_LEO_LINK" rel="noopener noreferrer" target="_blank">
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1 0l2.1-2.1a5 5 0 0 0-7.1-7.1L10.5 4.4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"></path><path d="M14 11a5 5 0 0 0-7.1 0L4.8 13.1a5 5 0 1 0 7.1 7.1l1.6-1.6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"></path></svg>
+</a>
+</div>
+</div>
+</article>
+</div>
+</div>
+</section>
+<!-- Adventures -->
+<section aria-labelledby="adventures" class="section">
+<div class="wrap">
+<h2 class="section-title" id="adventures">These are some of our (ad)ventures</h2>
 <div class="adventures">
-<a class="tile" href="https://thelandegroup.llc" target="_blank">
-<div class="tile-media tile-media--contain">
-<img alt="The Lande Group LLC" src="assets/thelandegroup-logo-text.png"/>
+<a class="tile" href="https://thelandegroup.llc" rel="noopener noreferrer" target="_blank">
+<div class="tile-media tile-media--logo">
+<img alt="The Lande Group LLC" class="tile-logo" src="assets/thelandegroup-logo-text.png"/>
 </div>
 <div class="tile-title">The Lande Group, LLC</div>
 </a>
-<a class="tile" href="#">
+<a class="tile" href="https://PLACEHOLDER_BRAND_STRATEGY" rel="noopener noreferrer" target="_blank">
 <div class="tile-media">
 <img alt="Brand Strategy" src="assets/adventure-brand-strategy.jpg"/>
 </div>
 <div class="tile-title">Brand Strategy</div>
 </a>
 </div>
+<div class="actions">
+<a class="btn" href="mailto:hello@landeland.com">Contact us</a>
+</div>
+</div>
+</section>
+<!-- About -->
+<section aria-labelledby="about-title" class="section" id="about">
+<div class="wrap narrow">
+<h2 class="section-title" id="about-title">About us</h2>
+<p>
+          Landeland is our family home base. The Gallery links to favorite photos. The tiles highlight a few things we’re building.
+        </p>
 </div>
 </section>
 </main>
+<footer class="site-footer">
+<div class="wrap footer-inner">
+<small>© <span id="year"></span> Jason Lande</small>
+<small class="muted">Powered by GitHub Pages</small>
+</div>
+</footer>
+<script>(function () {
+  const key = "landeland_theme";
+  const btn = document.getElementById("themeToggle");
+  const saved = localStorage.getItem(key);
 
-<script>
-  (function () {
-    const key = "landeland_theme";
-    const btn = document.getElementById("themeToggle");
-    const saved = localStorage.getItem(key);
+  function setTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem(key, theme);
+  }
 
-    function setTheme(theme) {
-      document.documentElement.setAttribute("data-theme", theme);
-      localStorage.setItem(key, theme);
-    }
+  if (!saved) {
+    const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
+  } else {
+    document.documentElement.setAttribute("data-theme", saved);
+  }
 
-    // Default to OS preference unless user previously chose
-    if (!saved) {
-      const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-      document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
-    } else {
-      document.documentElement.setAttribute("data-theme", saved);
-    }
-
-    if (btn) {
-      btn.addEventListener("click", () => {
-        const current = document.documentElement.getAttribute("data-theme") || "dark";
-        setTheme(current === "dark" ? "light" : "dark");
-      });
-    }
-  })();
-</script>
+  if (btn) {
+    btn.addEventListener("click", () => {
+      const current = document.documentElement.getAttribute("data-theme") || "light";
+      setTheme(current === "dark" ? "light" : "dark");
+    });
+  }
+})();</script><script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
 </body>
 </html>
