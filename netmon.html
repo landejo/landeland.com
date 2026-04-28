@@ -236,13 +236,30 @@ function setSignalBars(n){
 }
 function readSignal(){
   var nav=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
-  if(!nav){setSignalBars(0);return;}
+  if(!nav){
+    // iOS Safari doesn't expose Network Information API at all
+    // Show 2 bars as a neutral "connected but unknown" indicator
+    if(navigator.onLine) setSignalBars(2);
+    else setSignalBars(0);
+    return;
+  }
   var dl=nav.downlink;
-  if(dl>=10) setSignalBars(4);
-  else if(dl>=4) setSignalBars(3);
-  else if(dl>=1) setSignalBars(2);
-  else if(dl>0) setSignalBars(1);
-  else setSignalBars(0);
+  if(dl && dl>0){
+    // downlink available — use it
+    if(dl>=10)      setSignalBars(4);
+    else if(dl>=4)  setSignalBars(3);
+    else if(dl>=1)  setSignalBars(2);
+    else            setSignalBars(1);
+  } else {
+    // API present but no downlink hint (common on iOS/some Android)
+    // Fall back to connection type
+    var t = nav.effectiveType||nav.type||'';
+    if(t==='4g'||t==='wifi')      setSignalBars(4);
+    else if(t==='3g')             setSignalBars(3);
+    else if(t==='2g'||t==='slow-2g') setSignalBars(1);
+    else if(navigator.onLine)    setSignalBars(2); // connected, type unknown
+    else                          setSignalBars(0);
+  }
 }
 
 /* ── connection detect ── */
@@ -258,11 +275,18 @@ function detectConn(){
   if(dot) dot.className='dot online';
   if(nav){
     var t=nav.type||nav.effectiveType||'unknown';
-    var isCell=(t==='cellular'||t==='wimax'||t==='bluetooth');
+    var isCell=(t==='cellular'||t==='wimax'||t==='bluetooth'||t==='none');
     if(badge){ badge.className='badge '+(isCell?'cell':'wifi'); badge.textContent=isCell?'Cellular':'Wi-Fi'; }
     readSignal();
   } else {
-    if(badge){ badge.className='badge wifi'; badge.textContent='Connected'; }
+    // iOS Safari — no Network Information API
+    // Try to guess from the session type if one is active
+    var activeType = (typeof sessionType !== 'undefined' && sessionType) ? sessionType : null;
+    if(badge){
+      if(activeType==='cell'){ badge.className='badge cell'; badge.textContent='Cellular'; }
+      else { badge.className='badge wifi'; badge.textContent='Wi-Fi'; }
+    }
+    readSignal();
   }
 }
 
