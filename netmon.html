@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Network Monitor</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#1a1a1a;padding:16px;max-width:480px;margin:0 auto}
+h1{font-size:18px;font-weight:500;margin-bottom:4px;margin-top:8px}
+.sub{font-size:13px;color:#666;margin-bottom:14px}
+.status-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.dot{width:9px;height:9px;border-radius:50%;background:#aaa;flex-shrink:0}
+.dot.online{background:#3B6D11}.dot.offline{background:#A32D2D}
+.connlabel{font-size:13px;color:#555;flex:1;min-width:0}
+.badge{font-size:11px;padding:2px 8px;border-radius:6px;font-weight:500;white-space:nowrap}
+.badge.wifi{background:#E6F1FB;color:#0C447C}
+.badge.cell{background:#FAEEDA;color:#633806}
+.badge.unk{background:#eee;color:#555}
+.signal{display:flex;align-items:flex-end;gap:2px;height:16px}
+.signal .b{width:4px;border-radius:1px;background:#ddd}
+.signal .b.lit{background:#3B6D11}
+.signal .b:nth-child(1){height:4px}
+.signal .b:nth-child(2){height:7px}
+.signal .b:nth-child(3){height:11px}
+.signal .b:nth-child(4){height:15px}
+/* self-test inline styles */
+.selftest-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#888;transition:opacity .5s}
+.selftest-chip .sc-dot{width:7px;height:7px;border-radius:50%;background:#888;flex-shrink:0}
+.selftest-chip .sc-dot.checking{animation:scpulse .8s infinite}
+.selftest-chip .sc-dot.ok{background:#3B6D11}
+.selftest-chip .sc-dot.fail{background:#A32D2D}
+@keyframes scpulse{0%,100%{opacity:1}50%{opacity:.2}}
+.countdown-wrap{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 12px;background:#fff;border-radius:10px;border:1px solid #e5e5e5}
+.ring-container{position:relative;width:48px;height:48px;flex-shrink:0}
+.ring-container svg{transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:#eee;stroke-width:4}
+.ring-fg{fill:none;stroke:#185FA5;stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset 1s linear,stroke .3s}
+.ring-fg.running{stroke:#EF9F27;animation:spin 1.2s linear infinite}
+@keyframes spin{to{stroke-dashoffset:-126}}
+.ring-label{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:11px;font-weight:500;color:#1a1a1a;text-align:center;line-height:1.1}
+.ring-label .unit{font-size:9px;color:#aaa;display:block}
+.ci-title{font-size:12px;font-weight:500;color:#1a1a1a;margin-bottom:2px}
+.ci-sub{font-size:11px;color:#888}
+.interval-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.interval-row label{font-size:12px;color:#555;white-space:nowrap}
+.interval-row input[type=range]{flex:1;accent-color:#185FA5}
+.interval-row span{font-size:12px;font-weight:500;min-width:48px}
+.btn-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+button{border:1px solid #d0d0d0;background:#fff;border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;color:#1a1a1a;white-space:nowrap;font-family:inherit}
+button:active{transform:scale(.97)}
+button.go{background:#E6F1FB;border-color:#185FA5;color:#0C447C}
+button.stop{background:#FCEBEB;border-color:#E24B4A;color:#A32D2D}
+button:disabled{opacity:.4;cursor:not-allowed}
+.progress{height:3px;background:#eee;border-radius:2px;overflow:hidden;margin-bottom:10px;display:none}
+.pfill{height:100%;width:0%;background:#185FA5;transition:width .4s}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.mcard{background:#fff;border-radius:8px;border:1px solid #e5e5e5;padding:10px 12px}
+.mcard .lbl{font-size:11px;color:#888;margin-bottom:2px;display:flex;align-items:center;justify-content:space-between}
+.mcard .val{font-size:20px;font-weight:500;color:#1a1a1a;line-height:1.2}
+.mcard .msub{font-size:10px;color:#aaa;margin-top:2px}
+.tips{border-radius:8px;padding:10px 12px;margin-bottom:12px;display:none}
+.tips p{font-size:12px;line-height:1.6}
+.tips.healthy{background:#EAF4E0;border:1px solid #7AB648;color:#2E5E0E}
+.tips.warn{background:#FFF4E0;border:1px solid #EF9F27;color:#633806}
+.tips.bad{background:#FDECEA;border:1px solid #E24B4A;color:#7A1F1F}
+.sep{height:1px;background:#e5e5e5;margin:14px 0}
+.sec-label{font-size:11px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+.legend-row{display:flex;gap:12px;margin-bottom:6px}
+.legend-row span{display:flex;align-items:center;gap:4px;font-size:11px;color:#666}
+.lsq{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.chart-wrap{position:relative;width:100%;margin-bottom:12px}
+.sum-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.log-box{background:#fff;border-radius:8px;border:1px solid #e5e5e5;padding:10px 12px;max-height:220px;overflow-y:auto}
+.le{font-size:11px;font-family:ui-monospace,monospace;color:#555;line-height:1.9;border-bottom:1px solid #f0f0f0;padding:1px 0}
+.le:last-child{border-bottom:none}
+.le .ts{color:#bbb;margin-right:5px}
+.le.ok .m{color:#3B6D11}.le.warn .m{color:#854F0B}.le.err .m{color:#A32D2D}.le.info .m{color:#185FA5}
+</style>
+</head>
+<body>
+
+<!-- Title row -->
+<div style="display:flex;align-items:baseline;justify-content:space-between;margin:8px 0 2px 0">
+  <h1 style="font-size:18px;font-weight:500;color:#1a1a1a;margin:0">Network Monitor</h1>
+  <details id="inst" style="position:relative">
+    <summary style="font-size:11px;color:#bbb;cursor:pointer;list-style:none;padding:2px 6px;border-radius:4px;border:1px solid #eee">How to use</summary>
+    <div style="position:absolute;right:0;top:100%;z-index:20;background:#fff;border:1px solid #e5e5e5;border-radius:8px;padding:10px 12px;margin-top:4px;width:240px;box-shadow:0 4px 16px rgba(0,0,0,0.1)">
+      <p style="font-size:12px;color:#555;line-height:1.7;margin-bottom:3px"><strong style="font-weight:500;color:#1a1a1a">Wi-Fi:</strong> tap "Start Wi-Fi session".</p>
+      <p style="font-size:12px;color:#555;line-height:1.7;margin-bottom:3px"><strong style="font-weight:500;color:#1a1a1a">Cellular:</strong> turn off Wi-Fi, tap "Start cellular session".</p>
+      <p style="font-size:12px;color:#555;line-height:1.7">Run both to compare side-by-side.</p>
+    </div>
+  </details>
+</div>
+
+<!-- Single slim status strip: dot · badge · signal · self-test chip · countdown (right-aligned, inline) -->
+<div style="display:flex;align-items:center;gap:7px;margin-bottom:14px;min-height:26px">
+  <div class="dot" id="dot" style="flex-shrink:0"></div>
+  <span class="badge unk" id="connbadge" style="font-size:11px;padding:2px 7px">—</span>
+  <div class="signal">
+    <div class="b" id="sb1"></div><div class="b" id="sb2"></div>
+    <div class="b" id="sb3"></div><div class="b" id="sb4"></div>
+  </div>
+  <span class="selftest-chip" id="selftest-chip"><span class="sc-dot checking" id="sc-dot"></span><span id="sc-text">Checking…</span></span>
+  <div id="cdwrap" style="display:none;align-items:center;gap:6px;margin-left:auto">
+    <div class="ring-container" style="width:28px;height:28px;flex-shrink:0">
+      <svg width="28" height="28" viewBox="0 0 48 48">
+        <circle class="ring-bg" cx="24" cy="24" r="20"/>
+        <circle class="ring-fg" id="ring" cx="24" cy="24" r="20" stroke-dasharray="125.66" stroke-dashoffset="125.66"/>
+      </svg>
+      <div class="ring-label" style="font-size:9px"><span id="ring-num">—</span><span class="unit" id="ring-unit" style="font-size:8px;display:block"></span></div>
+    </div>
+    <div style="line-height:1.3">
+      <div class="ci-title" id="ci-title" style="font-size:11px;font-weight:500;color:#1a1a1a">Waiting</div>
+      <div class="ci-sub" id="ci-sub" style="font-size:10px;color:#aaa"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden connlabel kept for JS compat -->
+<span id="connlabel" style="display:none"></span>
+
+<div class="interval-row">
+  <label>Test every</label>
+  <input type="range" id="ivslider" min="0" max="15" value="3" step="1" oninput="onIvChange(this.value)">
+  <span id="ivout">60s</span>
+</div>
+
+<div class="btn-row">
+  <button class="go" id="btnWifi" onclick="startSession('wifi')">Start Wi-Fi session</button>
+  <button class="go" id="btnCell" onclick="startSession('cell')">Start cellular session</button>
+  <button class="stop" id="btnStop" onclick="stopSession()" disabled>Stop</button>
+
+</div>
+
+<div class="cards">
+  <div class="mcard"><div class="lbl">Download <span id="score-dl"></span></div><div class="val" id="cdl">—</div><div class="msub" id="cdl-s"></div></div>
+  <div class="mcard"><div class="lbl">Upload <span id="score-ul"></span></div><div class="val" id="cul">—</div><div class="msub" id="cul-s"></div></div>
+  <div class="mcard"><div class="lbl">Latency <span id="score-lat"></span></div><div class="val" id="clat">—</div><div class="msub" id="clat-s"></div></div>
+  <div class="mcard"><div class="lbl">Jitter</div><div class="val" id="cjit">—</div><div class="msub" id="cjit-s"></div></div>
+</div>
+
+<div class="tips" id="tips"><p id="tiptext"></p></div>
+<div class="sep"></div>
+
+<div id="chart-section-dl" style="display:none"><div class="sec-label">Download speed (Mbps)</div>
+<div class="legend-row">
+  <span><span class="lsq" style="background:#185FA5"></span>Wi-Fi</span>
+  <span><span class="lsq" style="background:#BA7517"></span>Cellular</span>
+</div>
+<div class="chart-wrap" style="height:185px"><canvas id="chartDl"></canvas></div>
+
+</div><div id="chart-section-lat" style="display:none"><div class="sec-label">Latency (ms)</div>
+<div class="legend-row">
+  <span><span class="lsq" style="background:#185FA5"></span>Wi-Fi</span>
+  <span><span class="lsq" style="background:#BA7517"></span>Cellular</span>
+</div>
+<div class="chart-wrap" style="height:185px"><canvas id="chartLat"></canvas></div>
+
+</div><div class="sep"></div>
+<div class="sec-label" style="margin-bottom:8px">Summary comparison</div>
+<div class="sum-cards">
+  <div class="mcard"><div class="lbl">Wi-Fi avg DL</div><div class="val" id="s-wdl">—</div></div>
+  <div class="mcard"><div class="lbl">Cell avg DL</div><div class="val" id="s-cdl">—</div></div>
+  <div class="mcard"><div class="lbl">Wi-Fi avg lat</div><div class="val" id="s-wlat">—</div></div>
+  <div class="mcard"><div class="lbl">Cell avg lat</div><div class="val" id="s-clat">—</div></div>
+  <div class="mcard"><div class="lbl">Wi-Fi consistency</div><div class="val" id="s-wcons">—</div></div>
+  <div class="mcard"><div class="lbl">Cell consistency</div><div class="val" id="s-ccons">—</div></div>
+</div>
+
+<div class="sep"></div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+  <div class="sec-label" style="margin-bottom:0">Event log</div>
+  <button id="btnExport" onclick="exportData()" style="border:none;background:none;font-size:11px;color:#bbb;cursor:pointer;padding:0;font-family:inherit">↓ CSV</button>
+</div>
+<div class="log-box" id="logbox">
+  <div class="le info"><span class="ts">--:--:--</span><span class="m">Running self-test…</span></div>
+</div>
+
+<script>
+/* ── register datalabels plugin — retry after script loads ── */
+function registerDatalabels() {
+  if (typeof ChartDataLabels !== 'undefined') {
+    Chart.register(ChartDataLabels);
+    return true;
+  }
+  return false;
+}
+registerDatalabels();
+
+/* ── constants ── */
+var MAXPTS = 40;
+var CIRC = 125.66;
+var IV_ALL = [15,30,45,60,120,180,300,420,600,720,900,1200,1500,1800,2400,3600];
+
+/* ── state ── */
+var sessions = {wifi:[], cell:[]};
+var sessionType = null, timerRef = null, cdRef = null, running = false;
+var intervalSec = 60;
+var cdRemaining = 0;
+var dlChart = null, latChart = null;
+
+/* Which download method worked during self-test */
+var dlMethod = null; /* 'xhr' | 'fetch' */
+var latMethod = null; /* 'no-cors' | 'img' */
+
+/* ── helpers ── */
+function ts(){ return new Date().toLocaleTimeString('en-US',{hour12:false}); }
+function sleep(ms){ return new Promise(function(r){setTimeout(r,ms);}); }
+
+function log(msg, type){
+  type = type||'info';
+  var box = document.getElementById('logbox');
+  var d = document.createElement('div'); d.className='le '+type;
+  d.innerHTML='<span class="ts">'+ts()+'</span><span class="m">'+msg+'</span>';
+  box.appendChild(d); box.scrollTop=box.scrollHeight;
+}
+
+function ivLabel(sec){
+  if(sec<60) return sec+'s';
+  if(sec%60===0) return (sec/60)+' min';
+  return Math.floor(sec/60)+'m '+(sec%60)+'s';
+}
+function onIvChange(v){
+  var sec = IV_ALL[parseInt(v)]||60;
+  intervalSec=sec;
+  document.getElementById('ivout').textContent=ivLabel(sec);
+}
+
+/* ── signal bars ── */
+function setSignalBars(n){
+  for(var i=1;i<=4;i++){
+    var el=document.getElementById('sb'+i);
+    el.className='b'+(i<=n?' lit':'');
+  }
+}
+function readSignal(){
+  var nav=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
+  if(!nav){setSignalBars(0);return;}
+  var dl=nav.downlink;
+  if(dl>=10) setSignalBars(4);
+  else if(dl>=4) setSignalBars(3);
+  else if(dl>=1) setSignalBars(2);
+  else if(dl>0) setSignalBars(1);
+  else setSignalBars(0);
+}
+
+/* ── connection detect ── */
+function detectConn(){
+  var dot=document.getElementById('dot');
+  var badge=document.getElementById('connbadge');
+  if(!navigator.onLine){
+    if(dot) dot.className='dot offline';
+    if(badge){ badge.className='badge unk'; badge.textContent='Offline'; }
+    setSignalBars(0); return;
+  }
+  var nav=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
+  if(dot) dot.className='dot online';
+  if(nav){
+    var t=nav.type||nav.effectiveType||'unknown';
+    var isCell=(t==='cellular'||t==='wimax'||t==='bluetooth');
+    if(badge){ badge.className='badge '+(isCell?'cell':'wifi'); badge.textContent=isCell?'Cellular':'Wi-Fi'; }
+    readSignal();
+  } else {
+    if(badge){ badge.className='badge wifi'; badge.textContent='Connected'; }
+  }
+}
+
+/* ── countdown ring ── */
+function startCountdown(total){
+  if(cdRef) clearInterval(cdRef);
+  cdRemaining=total;
+  _updateRing(cdRemaining,total,false);
+  cdRef=setInterval(function(){
+    cdRemaining--;
+    if(cdRemaining<0) cdRemaining=0;
+    _updateRing(cdRemaining,total,false);
+  },1000);
+}
+function _updateRing(rem,total,busy){
+  var ring=document.getElementById('ring');
+  var numEl=document.getElementById('ring-num');
+  var unitEl=document.getElementById('ring-unit');
+  var title=document.getElementById('ci-title');
+  var sub=document.getElementById('ci-sub');
+  if(busy){
+    ring.className='ring-fg running'; ring.style.strokeDashoffset='0';
+    numEl.textContent='…'; unitEl.textContent='';
+    title.textContent='Testing now'; sub.textContent='Measuring…'; return;
+  }
+  ring.className='ring-fg';
+  var frac=total>0?rem/total:0;
+  ring.style.strokeDashoffset=(CIRC*(1-frac)).toFixed(1);
+  if(rem>=60){numEl.textContent=Math.ceil(rem/60);unitEl.textContent='min';}
+  else{numEl.textContent=rem;unitEl.textContent='sec';}
+  title.textContent=rem===0?'Starting…':'Next test in';
+  sub.textContent=sessionType?(sessionType.toUpperCase()+' session active'):'';
+}
+function setRingRunning(){ _updateRing(0,intervalSec,true); }
+function setRingIdle(){
+  var ring=document.getElementById('ring');
+  ring.className='ring-fg'; ring.style.strokeDashoffset=CIRC;
+  document.getElementById('ring-num').textContent='—';
+  document.getElementById('ring-unit').textContent='';
+  document.getElementById('ci-title').textContent='Stopped';
+  document.getElementById('ci-sub').textContent='';
+}
+
+/* ── self-test ── */
+function diagSet(id, state, text){
+  var ic=document.getElementById('d-'+id+'-ic');
+  var tx=document.getElementById('d-'+id+'-txt');
+  ic.className='ic '+state;
+  ic.textContent=state==='ok'?'✓':state==='fail'?'✗':'…';
+  if(tx) tx.textContent=text;
+}
+
+async function selfTest(){
+  function chip(state, text){
+    var dot = document.getElementById('sc-dot');
+    var tx  = document.getElementById('sc-text');
+    var wrap= document.getElementById('selftest-chip');
+    if(!dot||!tx||!wrap) return;
+    dot.className = 'sc-dot '+(state==='ok'?'ok':state==='fail'?'fail':'checking');
+    tx.textContent = text;
+    if(state==='ok'){
+      // Fade out after 3s
+      setTimeout(function(){ wrap.style.opacity='0'; setTimeout(function(){ wrap.style.display='none'; }, 500); }, 3000);
+    }
+  }
+
+  chip('checking', 'Checking…');
+
+  /* Test latency */
+  var latOk = false;
+  try {
+    var t0=performance.now();
+    await fetch('https://www.gstatic.com/generate_204?_='+Date.now(),{mode:'no-cors',cache:'no-store'});
+    var ms=Math.round(performance.now()-t0);
+    if(ms>0&&ms<5000){ latMethod='no-cors'; latOk=true; }
+  } catch(e){}
+  if(!latOk){
+    try{var ms2=await imgPing('https://www.google.com/favicon.ico');if(ms2){latMethod='img';latOk=true;}}catch(e){}
+  }
+
+  /* Test download */
+  var dlOk = false;
+  try {
+    var xhrResult = await xhrDownload('https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg',3000);
+    if(xhrResult!==null&&xhrResult>0){ dlMethod='xhr'; dlOk=true; }
+  } catch(e){}
+  if(!dlOk){
+    try{
+      var r=await fetch('https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg?_='+Date.now(),{cache:'no-store'});
+      var buf=await r.arrayBuffer();
+      if(buf.byteLength>10000){ dlMethod='fetch'; dlOk=true; }
+    }catch(e){}
+  }
+
+  /* Test upload */
+  var ulOk = false;
+  var ulEndpoints=['https://httpbin.org/post','https://httpbin.io/post'];
+  for(var i=0;i<ulEndpoints.length&&!ulOk;i++){
+    try{
+      var data=new Uint8Array(32768); fillRandom(data);
+      var resp=await fetch(ulEndpoints[i]+'?_='+Date.now(),{method:'POST',body:data.buffer,cache:'no-store'});
+      if(resp.ok) ulOk=true;
+    }catch(e){}
+  }
+
+  if(latOk && dlOk){
+    chip('ok', 'Ready');
+    log('Self-test passed','ok');
+  } else {
+    var problems = [];
+    if(!latOk) problems.push('latency');
+    if(!dlOk)  problems.push('download');
+    chip('fail', problems.join(', ')+' blocked — try serving via local server');
+    log('Self-test: '+problems.join(', ')+' endpoints unreachable','warn');
+  }
+}
+
+/* ── measurement primitives ── */
+
+function imgPing(url){
+  return new Promise(function(resolve){
+    var img=new Image();
+    var t0=performance.now();
+    img.onload=img.onerror=function(){ resolve(Math.round(performance.now()-t0)); };
+    img.src=url+'?_='+Date.now();
+    setTimeout(function(){resolve(null);},4000);
+  });
+}
+
+function xhrDownload(url, timeoutMs){
+  return new Promise(function(resolve){
+    var xhr=new XMLHttpRequest();
+    var t0=performance.now();
+    var lastLoaded=0, lastTime=t0, samples=[];
+    xhr.onprogress=function(e){
+      var now=performance.now();
+      var dt=(now-lastTime)/1000;
+      var db=e.loaded-lastLoaded;
+      if(dt>=0.1&&db>0){ samples.push((db*8)/(dt*1e6)); }
+      lastLoaded=e.loaded; lastTime=now;
+    };
+    xhr.onload=function(){
+      var dt=(performance.now()-t0)/1000;
+      if(xhr.response&&xhr.response.byteLength>10000&&dt>0.05){
+        if(samples.length>0){
+          samples.sort(function(a,b){return a-b;});
+          resolve(samples[Math.floor(samples.length/2)]);
+        } else {
+          resolve((xhr.response.byteLength*8)/(dt*1e6));
+        }
+      } else resolve(null);
+    };
+    xhr.onerror=function(){resolve(null);};
+    xhr.ontimeout=function(){resolve(null);};
+    xhr.timeout=timeoutMs||12000;
+    xhr.responseType='arraybuffer';
+    xhr.open('GET',url+'?_='+Date.now());
+    xhr.send();
+  });
+}
+
+/* ── main measurements ── */
+async function measureLatency(n){
+  n=n||8;
+  var targets=[
+    'https://www.gstatic.com/generate_204',
+    'https://one.one.one.one/cdn-cgi/trace',
+    'https://www.apple.com/library/test/success.html'
+  ];
+  var times=[], fails=0;
+  for(var i=0;i<n;i++){
+    var url=targets[i%targets.length]+'?_='+Date.now()+i;
+    if(latMethod==='img'){
+      /* img ping fallback */
+      var ms=await imgPing('https://www.google.com/favicon.ico');
+      if(ms&&ms<5000) times.push(ms); else fails++;
+    } else {
+      var t0=performance.now();
+      try {
+        await fetch(url,{mode:'no-cors',cache:'no-store'});
+        var ms2=Math.round(performance.now()-t0);
+        if(ms2>0&&ms2<5000) times.push(ms2); else fails++;
+      } catch(e){ fails++; }
+    }
+    await sleep(100);
+  }
+  var v=times.filter(function(t){return t>0;});
+  if(!v.length) return{avg:null,jitter:null,loss:100};
+  var avg=Math.round(v.reduce(function(a,b){return a+b;},0)/v.length);
+  var jitter=Math.round(Math.sqrt(v.map(function(x){return(x-avg)*(x-avg);}).reduce(function(a,b){return a+b;},0)/v.length));
+  return{avg:avg,jitter:jitter,loss:Math.round(fails/n*100),min:Math.min.apply(null,v),max:Math.max.apply(null,v)};
+}
+
+async function measureDL() {
+  // Always use parallel streaming — 8 connections for 8s, same as speedtest.net
+  var DURATION = 8000;
+  var STREAMS = 8;
+  return new Promise(function(resolve) {
+    var totalBytes = 0;
+    var t0 = performance.now();
+    var done = false;
+    var controllers = [];
+    var timer = setTimeout(function() {
+      done = true;
+      controllers.forEach(function(c){ try{c.abort();}catch(e){} });
+      var elapsed = (performance.now() - t0) / 1000;
+      resolve(elapsed > 1 ? (totalBytes * 8) / (elapsed * 1e6) : null);
+    }, DURATION);
+    for (var i = 0; i < STREAMS; i++) {
+      (function(idx) {
+        var ctrl = new AbortController();
+        controllers.push(ctrl);
+        fetch('https://speed.cloudflare.com/__down?bytes=100000000&_=' + Date.now() + idx, {
+          cache: 'no-store', signal: ctrl.signal
+        }).then(function(r) {
+          var reader = r.body.getReader();
+          function pump() {
+            return reader.read().then(function(res) {
+              if (res.done || done) return;
+              totalBytes += res.value.byteLength;
+              return pump();
+            }).catch(function(){});
+          }
+          return pump();
+        }).catch(function(){});
+      })(i);
+    }
+  });
+}
+
+/* Fill a buffer with random bytes, chunked to respect the 65536 byte limit */
+function fillRandom(buf){
+  var CHUNK=65536;
+  for(var o=0;o<buf.length;o+=CHUNK){
+    crypto.getRandomValues(buf.subarray(o,Math.min(o+CHUNK,buf.length)));
+  }
+}
+
+async function measureUL() {
+  // Parallel upload streams for 5 seconds to properly measure upload throughput
+  var DURATION = 5000;
+  var STREAMS = 4;
+  var CHUNK = 262144; // 256KB per chunk
+  return new Promise(function(resolve) {
+    var totalBytes = 0;
+    var t0 = performance.now();
+    var done = false;
+    var timer = setTimeout(function() {
+      done = true;
+      var elapsed = (performance.now() - t0) / 1000;
+      resolve(elapsed > 0.5 ? (totalBytes * 8) / (elapsed * 1e6) : null);
+    }, DURATION);
+    function uploadStream() {
+      if (done) return;
+      var data = new Uint8Array(CHUNK);
+      fillRandom(data);
+      fetch('https://speed.cloudflare.com/__up?_=' + Date.now() + Math.random(), {
+        method: 'POST', body: data.buffer, cache: 'no-store'
+      }).then(function(r) {
+        if (!done) {
+          totalBytes += CHUNK;
+          uploadStream(); // immediately send next chunk
+        }
+      }).catch(function() {
+        // fallback: try httpbin
+        if (!done) {
+          fetch('https://httpbin.org/post?_=' + Date.now(), {
+            method: 'POST', body: data.buffer, cache: 'no-store'
+          }).then(function() {
+            if (!done) { totalBytes += CHUNK; uploadStream(); }
+          }).catch(function(){});
+        }
+      });
+    }
+    // Start N parallel upload streams
+    for (var i = 0; i < STREAMS; i++) uploadStream();
+  });
+}
+
+/* ── formatting ── */
+function fmtMbps(v){if(v==null)return'—';if(v<1)return Math.round(v*1000)+'K';return v.toFixed(1)+'M';}
+function fmtMs(v){return v==null?'—':v+'ms';}
+
+/* ── consistency score ── */
+function consistencyScore(arr){
+  var v=arr.filter(function(x){return x!=null&&x>0;});
+  if(v.length<3) return null;
+  var mean=v.reduce(function(a,b){return a+b;},0)/v.length;
+  if(!mean) return 0;
+  var sd=Math.sqrt(v.map(function(x){return(x-mean)*(x-mean);}).reduce(function(a,b){return a+b;},0)/v.length);
+  return Math.round(Math.max(0,Math.min(100,(1-sd/mean)*100)));
+}
+function scoreColor(s){return s>=80?'#3B6D11':s>=55?'#BA7517':'#A32D2D';}
+function scorePill(s){
+  if(s===null) return '';
+  var c=scoreColor(s);
+  return '<span style="display:inline-flex;align-items:center;padding:1px 6px;border-radius:10px;background:'+c+'22;border:1px solid '+c+'55;font-size:10px;font-weight:500;color:'+c+'">'+s+'%</span>';
+}
+
+/* ── UI updates ── */
+function updateLiveCards(dl,ul,lat,jit,type){
+  document.getElementById('cdl').textContent=fmtMbps(dl);
+  document.getElementById('cdl-s').textContent=dl?'Mbps':'';
+  document.getElementById('cul').textContent=fmtMbps(ul);
+  document.getElementById('cul-s').textContent=ul?'Mbps':'';
+  document.getElementById('clat').textContent=fmtMs(lat);
+  document.getElementById('clat-s').textContent=lat?'round-trip':'';
+  document.getElementById('cjit').textContent=fmtMs(jit);
+  document.getElementById('cjit-s').textContent=jit?'variation':'';
+  var pts=sessions[type];
+  if(pts.length>=3){
+    document.getElementById('score-dl').innerHTML=scorePill(consistencyScore(pts.map(function(p){return p.dl;})));
+    document.getElementById('score-lat').innerHTML=scorePill(consistencyScore(pts.map(function(p){return p.lat;})));
+  }
+}
+
+function analyzeTips(dl,lat,jit,loss,type){
+  var critical=[],warnings=[],label=type==='wifi'?'Wi-Fi':'Cellular';
+  if(dl!=null&&dl<1)             critical.push(label+' download under 1 Mbps — very slow, check signal.');
+  if(lat!=null&&lat>300)         critical.push('Latency '+lat+'ms — severely degraded, real-time apps will fail.');
+  if(loss>20)                    critical.push('Packet loss '+loss+'% — connection dropping heavily.');
+  if(dl!=null&&dl>=1&&dl<10)     warnings.push('Low download ('+dl.toFixed(0)+' Mbps) — streaming may buffer.');
+  if(lat!=null&&lat>100&&lat<=300) warnings.push('Elevated latency ('+lat+'ms) — calls/games may feel sluggish.');
+  if(jit!=null&&jit>40)          warnings.push('High jitter ('+jit+'ms) — unstable, expect choppy calls.');
+  if(loss>5&&loss<=20)           warnings.push('Moderate packet loss ('+loss+'%) — some requests may time out.');
+  var box=document.getElementById('tips'),txt=document.getElementById('tiptext');
+  if(!box||!txt)return;
+  box.style.display='block';
+  if(critical.length){
+    box.className='tips bad';
+    txt.innerHTML=critical.concat(warnings).map(function(i){return'• '+i;}).join('<br>');
+  } else if(warnings.length){
+    box.className='tips warn';
+    txt.innerHTML=warnings.map(function(i){return'• '+i;}).join('<br>');
+  } else {
+    box.className='tips healthy';
+    var dlStr=dl!=null?dl.toFixed(0)+' Mbps':'—';
+    var latStr=lat!=null?lat+'ms':'—';
+    txt.innerHTML='• All metrics healthy — DL '+dlStr+', latency '+latStr+', no packet loss.';
+  }
+}
+
+function rebuildCharts(){
+  registerDatalabels(); // ensure plugin registered before building
+  // Show chart sections on first data
+  var ds=document.getElementById('chart-section-dl');
+  var ls=document.getElementById('chart-section-lat');
+  if(ds) ds.style.display='block';
+  if(ls) ls.style.display='block';
+  if(typeof Chart === 'undefined'){ console.warn('[NM] Chart.js not loaded yet, skipping'); return; }
+  var wPts=sessions.wifi,cPts=sessions.cell;
+  var allPts=wPts.concat(cPts).sort(function(a,b){return a.ts-b.ts;});
+  var labels=allPts.map(function(p){return p.label;});
+  function ptsFor(arr,key){
+    return allPts.map(function(p){
+      for(var i=0;i<arr.length;i++){if(arr[i].ts===p.ts)return arr[i][key];}
+      return null;
+    });
+  }
+  var wDL=ptsFor(wPts,'dl'),cDL=ptsFor(cPts,'dl');
+  var wLat=ptsFor(wPts,'lat'),cLat=ptsFor(cPts,'lat');
+  var opts={responsive:true,maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      datalabels:{
+          display:function(ctx){return ctx.dataset.data[ctx.dataIndex]!=null;},
+          align:'end',anchor:'end',offset:8,color:'#333',
+          font:{size:14,weight:'700'},
+          formatter:function(v){return v==null?'':Math.round(v);},
+          padding:{bottom:4}
+        }
+    },
+    scales:{
+      x:{ticks:{font:{size:9},color:'#999',autoSkip:true,maxTicksLimit:8},grid:{color:'rgba(0,0,0,0.05)'}},
+      y:{ticks:{font:{size:9},color:'#999',stepSize:1,callback:function(v){return Number.isInteger(v)?v:'';}},grid:{color:'rgba(0,0,0,0.05)'},grace:'25%'}
+    }
+  };
+  if(dlChart) dlChart.destroy();
+  dlChart=new Chart(document.getElementById('chartDl'),{type:'line',data:{labels:labels,datasets:[
+    {label:'Wi-Fi DL',data:wDL,borderColor:'#185FA5',backgroundColor:'rgba(24,95,165,0.07)',borderWidth:2,pointRadius:3,tension:.3,spanGaps:true},
+    {label:'Cell DL',data:cDL,borderColor:'#BA7517',backgroundColor:'rgba(186,117,23,0.07)',borderWidth:2,borderDash:[5,3],pointRadius:3,tension:.3,spanGaps:true}
+  ]},options:opts});
+  if(latChart) latChart.destroy();
+  latChart=new Chart(document.getElementById('chartLat'),{type:'line',data:{labels:labels,datasets:[
+    {label:'Wi-Fi Lat',data:wLat,borderColor:'#185FA5',backgroundColor:'rgba(24,95,165,0.07)',borderWidth:2,pointRadius:3,tension:.3,spanGaps:true},
+    {label:'Cell Lat',data:cLat,borderColor:'#BA7517',backgroundColor:'rgba(186,117,23,0.07)',borderWidth:2,borderDash:[5,3],pointRadius:3,tension:.3,spanGaps:true}
+  ]},options:opts});
+  updateSummary();
+}
+
+function avg(arr){var v=arr.filter(function(x){return x!=null;});return v.length?Math.round(v.reduce(function(a,b){return a+b;},0)/v.length):null;}
+
+function updateSummary(){
+  var wdl=avg(sessions.wifi.map(function(p){return p.dl;}));
+  var cdl=avg(sessions.cell.map(function(p){return p.dl;}));
+  var wlat=avg(sessions.wifi.map(function(p){return p.lat;}));
+  var clat=avg(sessions.cell.map(function(p){return p.lat;}));
+  var wcons=consistencyScore(sessions.wifi.map(function(p){return p.dl;}));
+  var ccons=consistencyScore(sessions.cell.map(function(p){return p.dl;}));
+  document.getElementById('s-wdl').textContent=wdl!=null?wdl.toFixed(1)+' Mbps':'—';
+  document.getElementById('s-cdl').textContent=cdl!=null?cdl.toFixed(1)+' Mbps':'—';
+  document.getElementById('s-wlat').textContent=wlat!=null?wlat+'ms':'—';
+  document.getElementById('s-clat').textContent=clat!=null?clat+'ms':'—';
+  function ct(s){return s!=null?s+'%':'Collecting…';}
+  function cc(s){return s!=null?scoreColor(s):'#aaa';}
+  var we=document.getElementById('s-wcons'),ce=document.getElementById('s-ccons');
+  we.textContent=ct(wcons);we.style.color=cc(wcons);we.style.fontSize=wcons!=null?'':'13px';
+  ce.textContent=ct(ccons);ce.style.color=cc(ccons);ce.style.fontSize=ccons!=null?'':'13px';
+}
+
+/* ── main test run ── */
+/* Hard timeout wrapper — nothing can hang forever */
+function withTimeout(promise, ms, fallback) {
+  var timer;
+  var race = new Promise(function(resolve) {
+    timer = setTimeout(function(){ resolve(fallback); }, ms);
+  });
+  return Promise.race([
+    promise.then(function(v){ clearTimeout(timer); return v; }),
+    race
+  ]);
+}
+
+async function runOnce(){
+  if(running) return;
+  running=true;
+  var type=sessionType;
+  try {
+    log('Running test ('+type+')\u2026','info');
+    setRingRunning(); detectConn();
+
+    console.log('[NM] starting latency…');
+    var latRes = await withTimeout(measureLatency(8), 15000, {avg:null,jitter:null,loss:100});
+    console.log('[NM] latency result:', JSON.stringify(latRes));
+    console.log('[NM] starting download (streaming parallel)');
+    var dl = await withTimeout(measureDL(), 20000, null);
+    console.log('[NM] download result:', dl);
+    console.log('[NM] starting upload…');
+    var ul = await withTimeout(measureUL(), 15000, null);
+    console.log('[NM] upload result:', ul); setTimeout(function(){},500);
+
+    var lat=latRes.avg, jit=latRes.jitter, loss=latRes.loss;
+    var point={ts:Date.now(),label:ts(),dl:dl,ul:ul,lat:lat,jit:jit,loss:loss};
+    sessions[type].push(point);
+    if(sessions[type].length>MAXPTS) sessions[type].shift();
+
+    console.log('[NM] updating cards…');
+    updateLiveCards(dl,ul,lat,jit,type);
+    analyzeTips(dl,lat,jit,loss,type);
+    console.log('[NM] rebuilding charts, Chart available:', typeof Chart);
+    try { rebuildCharts(); } catch(ce){ console.error('[NM] rebuildCharts error:', ce); }
+    readSignal();
+
+    log('['+type.toUpperCase()+']'+
+        ' DL='+(dl!=null?dl.toFixed(2)+' Mbps':'N/A')+
+        ' UL='+(ul!=null?ul.toFixed(2)+' Mbps':'N/A')+
+        ' Lat='+(lat!=null?lat+'ms':'N/A')+
+        ' Jit='+(jit!=null?jit+'ms':'N/A')+
+        ' Loss='+loss+'%',
+        (loss>10||(lat!=null&&lat>200))?'warn':'ok');
+
+  } catch(e) {
+    log('Test error: '+(e.message||String(e)),'err');
+  } finally {
+    running=false;
+    startCountdown(intervalSec);
+  }
+}
+
+/* ── session control ── */
+function startSession(type){
+  if(timerRef) clearInterval(timerRef);
+  if(cdRef) clearInterval(cdRef);
+  sessionType=type;
+  intervalSec=IV_ALL[parseInt(document.getElementById('ivslider').value)]||60;
+  document.getElementById('btnWifi').disabled=true;
+  document.getElementById('btnCell').disabled=true;
+  document.getElementById('btnStop').disabled=false;
+  
+  log('--- '+type.toUpperCase()+' session started (every '+ivLabel(intervalSec)+') ---','info');
+  runOnce();
+  timerRef=setInterval(runOnce, intervalSec*1000);
+}
+
+function stopSession(){
+  if(timerRef) clearInterval(timerRef); timerRef=null;
+  if(cdRef) clearInterval(cdRef); cdRef=null;
+  running=false;
+  document.getElementById('btnWifi').disabled=false;
+  document.getElementById('btnCell').disabled=false;
+  document.getElementById('btnStop').disabled=true;
+  setRingIdle();
+  log('--- Session stopped ---','info');
+}
+
+function exportData(){
+  var csv='time,type,dl_mbps,ul_mbps,lat_ms,jit_ms,loss_pct\n';
+  ['wifi','cell'].forEach(function(t){
+    sessions[t].forEach(function(p){
+      csv+=p.label+','+t+','+(p.dl!=null?p.dl.toFixed(2):'')+','+(p.ul!=null?p.ul.toFixed(2):'')+','+(p.lat||'')+','+(p.jit||'')+','+p.loss+'\n';
+    });
+  });
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='network-monitor-'+Date.now()+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  log('CSV exported','info');
+}
+
+/* ── init ── */
+// inst-arr removed - details now uses browser default
+window.addEventListener('online',function(){log('Connection restored','ok');detectConn();});
+window.addEventListener('offline',function(){log('Connection lost','err');detectConn();});
+window.addEventListener('beforeunload',function(){ if(timerRef)clearInterval(timerRef); if(cdRef)clearInterval(cdRef); });
+detectConn();
+onIvChange(document.getElementById('ivslider').value);
+selfTest();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+</body>
+</html>
