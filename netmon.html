@@ -630,54 +630,71 @@ function analyzeTips(dl,lat,jit,loss,type){
 }
 
 function rebuildCharts(){
-  registerDatalabels(); // ensure plugin registered before building
-  // Show chart sections on first data
+  registerDatalabels();
   var ds=document.getElementById('chart-section-dl');
   var ls=document.getElementById('chart-section-lat');
   if(ds) ds.style.display='block';
   if(ls) ls.style.display='block';
-  if(typeof Chart === 'undefined'){ console.warn('[NM] Chart.js not loaded yet, skipping'); return; }
-  var wPts=sessions.wifi,cPts=sessions.cell;
-  var allPts=wPts.concat(cPts).sort(function(a,b){return a.ts-b.ts;});
-  var labels=allPts.map(function(p){return p.label;});
-  function ptsFor(arr,key){
-    return allPts.map(function(p){
-      for(var i=0;i<arr.length;i++){if(arr[i].ts===p.ts)return arr[i][key];}
-      return null;
-    });
+
+  // X-axis = test number (1, 2, 3...) per session independently
+  // This makes Wi-Fi and Cellular directly comparable regardless of when they ran
+  var wPts=sessions.wifi, cPts=sessions.cell;
+  var maxLen=Math.max(wPts.length, cPts.length, 1);
+  var labels=[];
+  for(var i=1;i<=maxLen;i++) labels.push(i);
+
+  function vals(arr, key){
+    return arr.map(function(p){ return p[key]; });
   }
-  var wDL=ptsFor(wPts,'dl'),cDL=ptsFor(cPts,'dl');
-  var wLat=ptsFor(wPts,'lat'),cLat=ptsFor(cPts,'lat');
+  // Pad shorter series with nulls so both lines start at index 1
+  function padded(arr, key){
+    var v = vals(arr, key);
+    while(v.length < maxLen) v.push(null);
+    return v;
+  }
+
+  var wDL  = padded(wPts,'dl'),  cDL  = padded(cPts,'dl');
+  var wLat = padded(wPts,'lat'), cLat = padded(cPts,'lat');
+
   var opts={responsive:true,maintainAspectRatio:false,
     plugins:{
       legend:{display:false},
       datalabels:{
-          display:function(ctx){return ctx.dataset.data[ctx.dataIndex]!=null;},
-          align:'end',anchor:'end',offset:8,color:'#333',
-          font:{size:14,weight:'700'},
-          formatter:function(v){return v==null?'':Math.round(v);},
-          padding:{bottom:4}
-        }
+        display:function(ctx){return ctx.dataset.data[ctx.dataIndex]!=null;},
+        align:'end',anchor:'end',offset:8,color:'#333',
+        font:{size:14,weight:'700'},
+        formatter:function(v){return v==null?'':Math.round(v);},
+        padding:{bottom:6}
+      }
     },
     scales:{
-      x:{ticks:{font:{size:9},color:'#999',autoSkip:true,maxTicksLimit:8},grid:{color:'rgba(0,0,0,0.05)'}},
-      y:{ticks:{font:{size:9},color:'#999',stepSize:1,callback:function(v){return Number.isInteger(v)?v:'';}},grid:{color:'rgba(0,0,0,0.05)'},grace:'25%'}
+      x:{
+        title:{display:true,text:'Test #',font:{size:10},color:'#aaa'},
+        ticks:{font:{size:9},color:'#999',stepSize:1,callback:function(v){return v+1;}},
+        grid:{color:'rgba(0,0,0,0.05)'}
+      },
+      y:{
+        ticks:{font:{size:9},color:'#999',stepSize:1,
+          callback:function(v){return Number.isInteger(v)?v:'';}},
+        grid:{color:'rgba(0,0,0,0.05)'},grace:'25%'
+      }
     }
   };
+
   if(dlChart) dlChart.destroy();
   dlChart=new Chart(document.getElementById('chartDl'),{type:'line',data:{labels:labels,datasets:[
-    {label:'Wi-Fi DL',data:wDL,borderColor:'#185FA5',backgroundColor:'rgba(24,95,165,0.07)',borderWidth:2,pointRadius:3,tension:.3,spanGaps:true},
-    {label:'Cell DL',data:cDL,borderColor:'#BA7517',backgroundColor:'rgba(186,117,23,0.07)',borderWidth:2,borderDash:[5,3],pointRadius:3,tension:.3,spanGaps:true}
+    {label:'Wi-Fi DL',  data:wDL,borderColor:'#185FA5',backgroundColor:'rgba(24,95,165,0.07)',borderWidth:2,pointRadius:4,tension:.3,spanGaps:false},
+    {label:'Cell DL',   data:cDL,borderColor:'#BA7517',backgroundColor:'rgba(186,117,23,0.07)', borderWidth:2,borderDash:[5,3],pointRadius:4,tension:.3,spanGaps:false}
   ]},options:opts});
+
   if(latChart) latChart.destroy();
   latChart=new Chart(document.getElementById('chartLat'),{type:'line',data:{labels:labels,datasets:[
-    {label:'Wi-Fi Lat',data:wLat,borderColor:'#185FA5',backgroundColor:'rgba(24,95,165,0.07)',borderWidth:2,pointRadius:3,tension:.3,spanGaps:true},
-    {label:'Cell Lat',data:cLat,borderColor:'#BA7517',backgroundColor:'rgba(186,117,23,0.07)',borderWidth:2,borderDash:[5,3],pointRadius:3,tension:.3,spanGaps:true}
+    {label:'Wi-Fi Lat', data:wLat,borderColor:'#185FA5',backgroundColor:'rgba(24,95,165,0.07)',borderWidth:2,pointRadius:4,tension:.3,spanGaps:false},
+    {label:'Cell Lat',  data:cLat,borderColor:'#BA7517',backgroundColor:'rgba(186,117,23,0.07)', borderWidth:2,borderDash:[5,3],pointRadius:4,tension:.3,spanGaps:false}
   ]},options:opts});
+
   updateSummary();
 }
-
-function avg(arr){var v=arr.filter(function(x){return x!=null;});return v.length?Math.round(v.reduce(function(a,b){return a+b;},0)/v.length):null;}
 
 function updateSummary(){
   var wdl=avg(sessions.wifi.map(function(p){return p.dl;}));
