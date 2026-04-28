@@ -729,7 +729,9 @@ async function runOnce(){
     console.log('[NM] upload result:', ul); setTimeout(function(){},500);
 
     var lat=latRes.avg, jit=latRes.jitter, loss=latRes.loss;
-    var point={ts:Date.now(),label:ts(),dl:dl,ul:ul,lat:lat,jit:jit,loss:loss};
+    var _nav=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
+    var _ct=_nav?(_nav.effectiveType||_nav.type||'unknown'):'unknown';
+    var point={ts:Date.now(),label:ts(),dl:dl,ul:ul,lat:lat,jit:jit,loss:loss,conn:_ct};
     sessions[type].push(point);
     if(sessions[type].length>MAXPTS) sessions[type].shift();
 
@@ -745,7 +747,8 @@ async function runOnce(){
         ' UL='+(ul!=null?ul.toFixed(2)+' Mbps':'N/A')+
         ' Lat='+(lat!=null?lat+'ms':'N/A')+
         ' Jit='+(jit!=null?jit+'ms':'N/A')+
-        ' Loss='+loss+'%',
+        ' Loss='+loss+'%'+
+        (_ct!=='unknown'?' ['+_ct+']':''),
         (loss>10||(lat!=null&&lat>200))?'warn':'ok');
 
   } catch(e) {
@@ -783,10 +786,10 @@ function stopSession(){
 }
 
 function exportData(){
-  var csv='time,type,dl_mbps,ul_mbps,lat_ms,jit_ms,loss_pct\n';
+  var csv='time,type,dl_mbps,ul_mbps,lat_ms,jit_ms,loss_pct,conn_type\n';
   ['wifi','cell'].forEach(function(t){
     sessions[t].forEach(function(p){
-      csv+=p.label+','+t+','+(p.dl!=null?p.dl.toFixed(2):'')+','+(p.ul!=null?p.ul.toFixed(2):'')+','+(p.lat||'')+','+(p.jit||'')+','+p.loss+'\n';
+      csv+=p.label+','+t+','+(p.dl!=null?p.dl.toFixed(2):'')+','+(p.ul!=null?p.ul.toFixed(2):'')+','+(p.lat||'')+','+(p.jit||'')+','+p.loss+','+(p.conn||'')+'\n';
     });
   });
   var a=document.createElement('a');
